@@ -52,5 +52,8 @@
   </div>
 </template>
 
-<script lang="ts"></script>
+<script lang="ts">
+import { onMounted } from "vue";
+onMounted(() => {});
+</script>
 <style scoped></style>
