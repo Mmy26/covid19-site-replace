@@ -7,7 +7,7 @@ type State = { totalInfo: TotalInfo };
 export const useTotalInfoProvider = () => {
   // state
   const globalState = reactive<State>({
-    totalInfo: new TotalInfo(1, 1, 1, 1, 1),
+    totalInfo: new TotalInfo(1, 1, 1, 1, 1, 1),
   });
   // acitions
   const setTotalInfo = async (): Promise<void> => {
