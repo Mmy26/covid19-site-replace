@@ -28,7 +28,7 @@
       <tbody>
         <tr>
           <td class="font-black bg-red-700 text-white">
-            {{ totalInfo.accumulationPatient }}人
+            {{ totalInfo.accumulationExits }}人
           </td>
           <td class="font-black bg-red-700 text-white">
             {{ totalInfo.accumulationDead }}人
@@ -38,10 +38,10 @@
       <tbody>
         <tr>
           <td class="border-collapse border-2 border-red-700">
-            対策病床数 115,400床
+            対策病床数 {{ totalInfo.totalSickBed }}床
           </td>
           <td class="border-collapse border-2 border-red-700">
-            PCR検査陽性者数 15,446,827人
+            PCR検査陽性者数 {{ totalInfo.accumulationPatient }}人
           </td>
         </tr>
       </tbody>
@@ -66,7 +66,7 @@ import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
 const store = inject(totalInfoKey);
 
-const totalInfo = ref(new TotalInfo(0, 0, 0, 0));
+const totalInfo = ref(new TotalInfo(0, 0, 0, 0, 0, 0));
 
 onMounted(async () => {
   //storeのエラーを回避

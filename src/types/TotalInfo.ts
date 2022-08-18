@@ -4,11 +4,16 @@ export class TotalInfo {
     private _currentAvarage: number,
     // 現在の患者数
     private _currentPatient: number,
+    // 対策病床数
+    private _totalSickBed: number,
     // 累積患者数
     private _accumulationPatient: number,
     // 累積死者数
-    private _accumulationDead: number
+    private _accumulationDead: number,
+    // 退院者数
+    private _accumulationExits: number
   ) {}
+
   public get currentAvarage(): number {
     return this._currentAvarage;
   }
@@ -23,6 +28,14 @@ export class TotalInfo {
   public set currentPatient(currentPatient: number) {
     this._currentPatient = currentPatient;
   }
+
+  public get totalSickBed(): number {
+    return this._totalSickBed;
+  }
+
+  public set totalSickBed(totalSickBed: number) {
+    this._totalSickBed = totalSickBed;
+  }
   public get accumulationPatient(): number {
     return this._accumulationPatient;
   }
@@ -36,5 +49,12 @@ export class TotalInfo {
 
   public set accumulationDead(accumulationDead: number) {
     this._accumulationDead = accumulationDead;
+  }
+  public get accumulationExits(): number {
+    return this._accumulationExits;
+  }
+
+  public set accumulationExits(accumulationExits: number) {
+    this._accumulationExits = accumulationExits;
   }
 }
