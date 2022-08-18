@@ -11,8 +11,12 @@
       </thead>
       <tbody>
         <tr>
-          <td class="font-black bg-red-700 text-white">100%</td>
-          <td class="font-black bg-red-700 text-white">1000人</td>
+          <td class="font-black bg-red-700 text-white">
+            {{ totalInfo.currentAvarage }}%
+          </td>
+          <td class="font-black bg-red-700 text-white">
+            {{ totalInfo.currentPatient }}人
+          </td>
         </tr>
       </tbody>
       <thead>
@@ -23,8 +27,12 @@
       </thead>
       <tbody>
         <tr>
-          <td class="font-black bg-red-700 text-white">100人</td>
-          <td class="font-black bg-red-700 text-white">1000人</td>
+          <td class="font-black bg-red-700 text-white">
+            {{ totalInfo.accumulationPatient }}人
+          </td>
+          <td class="font-black bg-red-700 text-white">
+            {{ totalInfo.accumulationDead }}人
+          </td>
         </tr>
       </tbody>
       <tbody>
@@ -52,8 +60,25 @@
   </div>
 </template>
 
-<script lang="ts">
-import { onMounted } from "vue";
-onMounted(() => {});
+<script setup lang="ts">
+import { onMounted, inject, reactive, ref } from "vue";
+import { totalInfoKey } from "../providers/useTotalInfoProvider";
+import { TotalInfo } from "../types/TotalInfo";
+const store = inject(totalInfoKey);
+
+const totalInfo = ref(new TotalInfo(0, 0, 0, 0));
+
+onMounted(async () => {
+  //storeのエラーを回避
+  if (!store) {
+    throw new Error("");
+  }
+
+  await store.setTotalInfo();
+  totalInfo.value = store.totalInfo.value;
+
+  console.log(totalInfo.value);
+  console.log(store.totalInfo.value);
+});
 </script>
 <style scoped></style>
