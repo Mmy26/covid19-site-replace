@@ -57,16 +57,45 @@
         </tr>
       </tbody>
     </table>
+
+    <div class="flex bg-white">
+      <button
+        v-for="preLocalInfo of preInfo"
+        :key="preLocalInfo.id"
+        class="flex-1 text-white text-center bg-black px-4 py-2 m-2"
+        v-on:click="clickPreData(preLocalInfo.name)"
+      >
+        {{ preLocalInfo.name }}
+        {{ preLocalInfo.currentAvarage }}% {{ preLocalInfo.currentPatient }}/{{
+          preLocalInfo.totalSickBed
+        }}
+      </button>
+    </div>
+    <canvas id="myChart" width="400" height="400"></canvas>
   </div>
 </template>
 
 <script setup lang="ts">
+import { Chart } from "chart.js";
 import { onMounted, inject, reactive, ref } from "vue";
 import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
+import { PreInfo } from "../types/PreInfo";
+import router from "../router/router";
 const store = inject(totalInfoKey);
 
 const totalInfo = ref(new TotalInfo(0, 0, 0, 0, 0, 0));
+let preInfo = ref(new Array<PreInfo>());
+
+const ctx = document.getElementById("myChart");
+
+/**
+ * 各県へリンク.
+ * @param data
+ */
+const clickPreData = (data) => {
+  router.push(`/${data}`);
+};
 
 onMounted(async () => {
   //storeのエラーを回避
@@ -76,9 +105,8 @@ onMounted(async () => {
 
   await store.setTotalInfo();
   totalInfo.value = store.totalInfo.value;
-
-  console.log(totalInfo.value);
-  console.log(store.totalInfo.value);
+  await store.setInfoOnEachPrefecture();
+  preInfo.value = store.infoOnEachPrefecture.value;
 });
 </script>
 <style scoped></style>
