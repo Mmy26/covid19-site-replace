@@ -76,8 +76,8 @@
 </template>
 
 <script setup lang="ts">
-import { Chart } from "chart.js";
 import { onMounted, inject, reactive, ref } from "vue";
+import Chart, { ChartItem } from "chart.js/auto";
 import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
@@ -86,8 +86,6 @@ const store = inject(totalInfoKey);
 
 const totalInfo = ref(new TotalInfo(0, 0, 0, 0, 0, 0));
 let preInfo = ref(new Array<PreInfo>());
-
-const ctx = document.getElementById("myChart");
 
 /**
  * 各県へリンク.
@@ -107,6 +105,33 @@ onMounted(async () => {
   totalInfo.value = store.totalInfo.value;
   await store.setInfoOnEachPrefecture();
   preInfo.value = store.infoOnEachPrefecture.value;
+
+  const ctx = document.getElementById("myChart");
+  const myChart = new Chart(ctx as ChartItem, {
+    type: "bubble",
+    data: {
+      datasets: [
+        {
+          type: "bar",
+          label: "Bar Dataset",
+          data: [10, 20, 30, 40, 50],
+        },
+        {
+          type: "line",
+          label: "Line Dataset",
+          data: [50, 50, 50, 50, 50],
+        },
+      ],
+      labels: ["January", "February", "March", "April", "April"],
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
 });
 </script>
 <style scoped></style>
