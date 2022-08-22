@@ -14,7 +14,9 @@ const totalInfo = ref(new TotalInfo(0, 0, 0, 0, 0, 0));
 // 各県の最新データ
 const preInfo = ref(new Array<PreInfo>());
 
-const itemName = ref("");
+// paramsから県名を取得
+const route = useRoute();
+const itemName = route.params.id;
 
 const preInfoCurrentAverage = ref(0);
 onMounted(async () => {
@@ -23,9 +25,6 @@ onMounted(async () => {
     throw new Error("");
   }
 
-  // paramsから県名を取得
-  const route = useRoute();
-  itemName.value = route.params.id;
   console.log(itemName);
 
   await store.setTotalInfo();
@@ -36,7 +35,7 @@ onMounted(async () => {
   const itemId = ref(0);
 
   for (let pre of preInfo.value) {
-    if (itemName.value === pre.name) {
+    if (itemName === pre.name) {
       itemId.value = pre.id;
     }
   }
