@@ -1,9 +1,83 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, inject } from "vue";
 import Chart, { ChartItem } from "chart.js/auto";
-onMounted(() => {
+import { totalInfoKey } from "../providers/useTotalInfoProvider";
+import { TotalInfo } from "../types/TotalInfo";
+import { PreInfo } from "../types/PreInfo";
+import { useRoute } from "vue-router";
+
+// storeの定義
+const store = inject(totalInfoKey);
+
+// 全国の最新データ
+const totalInfo = ref(new TotalInfo(0, 0, 0, 0, 0, 0));
+// 各県の最新データ
+const preInfo = ref(new Array<PreInfo>());
+
+const itemName = ref("");
+
+const preInfoCurrentAverage = ref(0);
+onMounted(async () => {
+  //storeのエラーを回避
+  if (!store) {
+    throw new Error("");
+  }
+
+  // paramsから県名を取得
+  const route = useRoute();
+  itemName.value = route.params.id;
+  console.log(itemName);
+
+  await store.setTotalInfo();
+  totalInfo.value = store.totalInfo.value;
+  await store.setInfoOnEachPrefecture();
+  preInfo.value = store.infoOnEachPrefecture.value;
+
+  const itemId = ref(0);
+
+  for (let pre of preInfo.value) {
+    if (itemName.value === pre.name) {
+      itemId.value = pre.id;
+    }
+  }
+  console.log(itemId.value);
+
+  // 円グラフ
   const ctx = document.getElementById("myChart");
-  const myChart = new Chart(ctx as ChartItem, {
+  // 円グラフのデータ
+  const myChartData = new Array<number>();
+  preInfoCurrentAverage.value = preInfo.value[itemId.value - 1].currentAvarage;
+  myChartData.push(preInfo.value[itemId.value - 1].currentPatient);
+  // 予備病床数
+  let remainingSickBed =
+    preInfo.value[itemId.value - 1].totalSickBed -
+    preInfo.value[itemId.value - 1].currentPatient;
+  myChartData.push(remainingSickBed);
+  let myChart = new Chart(ctx as ChartItem, {
+    type: "bubble",
+    data: {
+      datasets: [
+        {
+          type: "doughnut",
+          label: "現在患者数",
+          data: myChartData,
+        },
+      ],
+      labels: ["January"],
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: false,
+        },
+      },
+    },
+  });
+  console.log(preInfo.value[itemId.value - 1]);
+
+  // 線グラフ
+  const ctx2 = document.getElementById("myChart2");
+  const myChart2 = new Chart(ctx2 as ChartItem, {
     type: "bubble",
     data: {
       datasets: [
@@ -31,96 +105,8 @@ onMounted(() => {
 });
 </script>
 <template>
-  <p>テスト</p>
+  <p>{{ itemName }} 現在患者数/対策病床数 {{ preInfoCurrentAverage }}%</p>
   <canvas id="myChart" width="400" height="400"></canvas>
+  <canvas id="myChart2" width="400" height="400"></canvas>
 </template>
 <style scoped></style>
-
-<!-- // BarChart.ts
-<template>
-  <Bar
-    :chart-options="chartOptions"
-    :chart-data="chartData"
-    :chart-id="chartId"
-    :dataset-id-key="datasetIdKey"
-    :plugins="plugins"
-    :css-classes="cssClasses"
-    :styles="styles"
-    :width="width"
-    :height="height"
-  />
-</template>
-<script lang="ts">
-import { defineComponent, h, PropType } from "vue";
-import { Bar } from "vue-chartjs";
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  PluginOptionsByType,
-} from "chart.js";
-
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale
-);
-
-export default defineComponent({
-  name: "BarChart",
-  components: { Bar },
-  props: {
-    chartId: {
-      type: String,
-      default: "bar-chart",
-    },
-    width: {
-      type: Number,
-      default: 400,
-    },
-    height: {
-      type: Number,
-      default: 400,
-    },
-    cssClasses: {
-      default: "",
-      type: String,
-    },
-    styles: {
-      type: Object as PropType<Partial<CSSStyleDeclaration>>,
-      default: () => {},
-    },
-    plugins: {
-      type: Array as PropType<Plugin<"bar">[]>,
-      default: () => [],
-    },
-  },
-  setup(props) {
-    const chartData = {
-      labels: ["January", "February", "March", "a"],
-      datasets: [{ data: [40, 20, 12, 20] }],
-    };
-
-    const chartOptions = { responsive: true };
-
-    return () =>
-      h(Bar, {
-        chartData,
-        chartOptions,
-        chartId: props.chartId,
-        width: props.width,
-        height: props.height,
-        cssClasses: props.cssClasses,
-        styles: props.styles,
-        plugins: props.plugins,
-      });
-  },
-});
-</script> -->

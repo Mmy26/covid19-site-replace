@@ -93,7 +93,6 @@ export const useTotalInfoProvider = () => {
             Number(sickBedData.入院患者受入確保病床);
         }
       }
-      console.log(globalState.infoOnEachPrefecture);
     }
   };
 
