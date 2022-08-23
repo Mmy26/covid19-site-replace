@@ -4,6 +4,8 @@ export class PreInfo {
     private _id: number,
     // 県名
     private _name: string,
+    // 県名
+    private _nameEng: string,
     // 現在の病床使用率
     private _currentAvarage: number,
     // 現在の患者数
@@ -32,9 +34,17 @@ export class PreInfo {
   public set name(name: string) {
     this._name = name;
   }
+  public get nameEng(): string {
+    return this._nameEng;
+  }
+
+  public set nameEng(nameEng: string) {
+    this._nameEng = nameEng;
+  }
   public get currentAvarage(): number {
     return this._currentAvarage;
   }
+  
 
   public set currentAvarage(currentAvarage: number) {
     this._currentAvarage = currentAvarage;

@@ -7,16 +7,13 @@ type State = { totalInfo: TotalInfo; infoOnEachPrefecture: Array<PreInfo> };
 
 export const useTotalInfoProvider = () => {
   // state
-  /**
-   * 全国の情報.
-   */
   const globalState = reactive<State>({
     /**
-     * 全国の情報.
+     * 全国の最新情報.
      */
     totalInfo: new TotalInfo(1, 1, 1, 1, 1, 1),
     /**
-     * 各県の情報.
+     * 各県の最新情報.
      */
     infoOnEachPrefecture: [],
   });
@@ -69,6 +66,7 @@ export const useTotalInfoProvider = () => {
         new PreInfo(
           id.value,
           "",
+          preData.name,
           0,
           preData.ncurrentpatients,
           0,

@@ -11,6 +11,8 @@ onMounted(() => {
     header: true,
     complete: function (results) {
       const data: any = results.data;
+      console.log(data);
+       console.log(data[0].Date);
       console.log(data[0]["(ALL) Requiring inpatient care"]);
     },
   });
