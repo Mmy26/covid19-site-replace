@@ -5,7 +5,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Top from "../components/Top.vue";
 import Test from "../components/Test.vue";
 import PreDataPage from "../components/PreDataPage.vue";
-import FileInput from "../components/FileInput.vue";
+
 
 const routes = [
   {
@@ -21,10 +21,7 @@ const routes = [
     component: Test, // HelloWorldコンポーネントルーティング
   },
 
-  {
-    path: "/fileInput",
-    component: FileInput, // HelloWorldコンポーネントルーティング
-  },
+ 
 ];
 const router = createRouter({
   history: createWebHistory(),
