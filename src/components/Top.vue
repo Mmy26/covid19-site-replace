@@ -1,9 +1,14 @@
 <template>
-  <div id="nav" class="auto-cols-auto lg:flex flex-row">
-    <table class="border-collapse border-2 border-red-700 basis-1/2  m-7">
+  <div
+    id="nav"
+    class="lg:flex lg:flex-row justify-center items-center auto-cols-auto flex flex-col"
+  >
+    <table
+      class="w-8/12 aspect-video border-collapse border-2 border-red-700 basis-1/2 m-7"
+    >
       <thead>
         <tr>
-          <th class="border-collapse border-2 border-red-700">
+          <th class="border-collapse border-2 border-red-700 lg:text-xs">
             現在患者数/対策病床数
           </th>
           <th class="border-collapse border-2 border-red-700">現在患者数</th>
@@ -50,42 +55,48 @@
           <td
             class="col-span-2 text-center border-collapse border-1 border-red-700"
           >
-            臨床工学技士 14,378人 / 人工呼吸器 28,197台 / ECMO 1,412台
-            2020年2月回答 出典 一般社団法人 日本呼吸療法医学会 公益社団法人
-            日本臨床工学技士会
+            <p class="text-xs">
+              臨床工学技士 14,378人 / 人工呼吸器 28,197台 / ECMO 1,412台
+              2020年2月回答 出典 一般社団法人 日本呼吸療法医学会 公益社団法人
+              日本臨床工学技士会
+            </p>
           </td>
         </tr>
       </tbody>
     </table>
-    新型コロナ対策病床数は「感染症指定医療機関の指定状況」の下記合計と仮定 特定
-    一種 二種(感染) 二種(結核) 二種(一般/精神)
-    「新型コロナウイルス対策病床数オープンデータ」を使用
-    「新型コロナウイルス患者数オープンデータ」を使用(速報)
-<div class="basis-1/2">
-    <div class="flex bg-white col-auto">
-      <button class="flex-1 text-white text-center bg-black px-4 py-2 m-2">
-        {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}
-        (全国)現在患者数/対策病床数
-      </button>
+    <p class="text-xs">
+      新型コロナ対策病床数は「感染症指定医療機関の指定状況」の下記合計と仮定
+      特定 一種 二種(感染) 二種(結核) 二種(一般/精神)
+      「新型コロナウイルス対策病床数オープンデータ」を使用
+      「新型コロナウイルス患者数オープンデータ」を使用(速報)
+    </p>
+    <div class="basis-1/2 w-8/12">
+      <div class="flex bg-white col-auto">
+        <button class="flex-1 text-white text-center bg-black px-4 py-2 m-2">
+          {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}
+          (全国)現在患者数/対策病床数
+        </button>
+      </div>
+      <div class="flex bg-white overflow-y-auto">
+        <button
+          v-for="preLocalInfo of preInfo"
+          :key="preLocalInfo.id"
+          class="flex-1 text-white text-center bg-black px-4 py-2 m-2"
+          v-on:click="clickPreData(preLocalInfo.name)"
+        >
+          {{ preLocalInfo.name }}
+          {{ preLocalInfo.currentAvarage }}%
+          {{ preLocalInfo.currentPatient }}/{{ preLocalInfo.totalSickBed }}
+        </button>
+      </div>
     </div>
-    <div class="flex bg-white overflow-y-auto">
-      <button
-        v-for="preLocalInfo of preInfo"
-        :key="preLocalInfo.id"
-        class="flex-1 text-white text-center bg-black px-4 py-2 m-2"
-        v-on:click="clickPreData(preLocalInfo.name)"
-      >
-        {{ preLocalInfo.name }}
-        {{ preLocalInfo.currentAvarage }}% {{ preLocalInfo.currentPatient }}/{{
-          preLocalInfo.totalSickBed
-        }}
-      </button>
-    </div>
-</div>
-    
-    新型コロナウイルス感染症（国内事例） 現在患者数 / 対策病床数
-    ※軽症者等は自宅療養など、病床を使用しないことがあります（詳細） （現在患者数
-    前日より増加 前日より減少） COVID-19 日本の新型コロナウイルス概況
+
+    <p class="text-xs">
+      新型コロナウイルス感染症（国内事例） 現在患者数 / 対策病床数
+      ※軽症者等は自宅療養など、病床を使用しないことがあります（詳細）
+      （現在患者数 前日より増加 前日より減少） COVID-19
+      日本の新型コロナウイルス概況
+    </p>
     <canvas id="myChart" width="400" height="400"></canvas>
   </div>
 </template>
@@ -98,159 +109,93 @@ import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
 import router from "../router/router";
 import { AccInfo } from "../types/AccInfo";
+import { MyChartData } from "../types/myChartData";
+import Papa from "papaparse";
+// storeの定義
 const store = inject(totalInfoKey);
-
 // 全国の最新データ
 const totalInfo = ref(new TotalInfo(0, 0, 0, 0, 0, 0));
 // 各県の最新データ
 const preInfo = ref(new Array<PreInfo>());
 // 累積データ
 const accuInfo = ref<AccInfo[]>([]);
+// myChartのデータ
+let myChartData: { x: string; y: number }[] = [];
+// myChart2のデータ
+let myChartData2: { x: string; y: number }[] = [];
+// chartのラベル
+const myChartDate = ref<string[]>([]);
 
+onMounted(async (): Promise<void> => {
+  //storeのエラーを回避
+
+  if (!store) {
+    throw new Error("");
+  }
+  await store.setTotalInfo();
+  store.setInfoOnEachPrefecture();
+  await setAccuInfo("ALL");
+  // console.log("戻った");
+
+  totalInfo.value = store.totalInfo.value;
+  // console.log(totalInfo.value);
+
+  preInfo.value = store.infoOnEachPrefecture.value;
+  accuInfo.value = store.accuInfo.value;
+  // myChartData = store.myChartData.value;
+  // myChartData2 = store.myChartData2.value;
+  // console.log("myChartData.value", myChartData);
+  // console.log("myChartData2.value", myChartData2);
+  // グラフの日時
+  for (let data of accuInfo.value) {
+    myChartDate.value.push(data.date);
+  }
+  // setTimeout(() => {
+  chart();
+  // }, 5000);
+});
 /**
  * 各県へリンク.
  * @param data
  */
-const clickPreData = (data) => {
+const clickPreData = (data: string) => {
   router.push(`/${data}`);
 };
-
-onMounted(async () => {
-  //storeのエラーを回避
+/**
+ * stateにデータをセット.
+ */
+const dataSet = () => {
   if (!store) {
     throw new Error("");
   }
+  store.setTotalInfo();
+  store.setInfoOnEachPrefecture();
+  setAccuInfo("ALL");
+};
 
-  await store.setTotalInfo();
-  totalInfo.value = store.totalInfo.value;
-  await store.setInfoOnEachPrefecture();
-  preInfo.value = store.infoOnEachPrefecture.value;
-  await store.setAccuInfo("ALL");
-  accuInfo.value = store.accuInfo.value;
-
-  // 入院を要する者の数
-  const myChartData = ref<number[]>([]);
-  for(let data of accuInfo.value){
-    myChartData.value.push(data.dischangedFromHospital)
-  }
-  // グラフの日時
-  const myChartDate = ref<Date[]>([])
-  for(let data of accuInfo.value){
-    myChartDate.value.push(data.date)
-  }
-
+/**
+ * 取得したデータをChartにセット.
+ */
+const chart = () => {
   const ctx = document.getElementById("myChart");
-  const myChart = new Chart(ctx as ChartItem, {
+  new Chart(ctx as ChartItem, {
     type: "bubble",
     data: {
       datasets: [
         {
           type: "bar",
           label: "搬送困難事案",
-          data: myChartData.value,
-          
+          data: myChartData2,
+          borderColor: "rgb(80,80,200)",
         },
         {
           type: "line",
           label: "入院を要する者",
-          data: [
-            6250, 6074, 5914, 5162, 4732, 4339, 4025, 3787, 3667, 3400, 3009,
-            2799, 2495, 2293, 2130, 2111, 1939, 1788, 1637, 1556, 1466, 1452,
-            1436, 1341, 1272, 1207, 1141, 1064, 1042, 1060, 1028, 965, 923, 854,
-            810, 801, 819, 871, 760, 712, 707, 677, 711, 732, 706, 698, 713,
-            727, 757, 790, 822, 869, 897, 1006, 1105, 1224, 1386, 1552, 1671,
-            1721, 1776, 1929, 2139, 2339, 2587, 2754, 2789, 2885, 3191, 3560,
-            3865, 4113, 4345, 4421, 4751, 5369, 5949, 6315, 6573, 6828, 7063,
-            7508, 8062, 8945, 9950, 10330, 9887, 11337, 11881, 12167, 12382,
-            13011, 13633, 13724, 13612, 13289, 13043, 12984, 13084, 13020,
-            12778, 12097, 11702, 11727, 11615, 11747, 11731, 11225, 10663,
-            10323, 10127, 9708, 9705, 9658, 9142, 9111, 8608, 8371, 7965, 7917,
-            7877, 7449, 7108, 6849, 6771, 6693, 6763, 6849, 6573, 6353, 6179,
-            6018, 6032, 6027, 6132, 6169, 6126, 5905, 5384, 5265, 5451, 5501,
-            5379, 5330, 5304, 5326, 5281, 5319, 5406, 5260, 5131, 5056, 5160,
-            5120, 5292, 5443, 5245, 5162, 5054, 5176, 5205, 5326, 5375, 5174,
-            5031, 5038, 5071, 5220, 5440, 5507, 5503, 5448, 5642, 5848, 6012,
-            6247, 6475, 6470, 6635, 6708, 7076, 7503, 7905, 8347, 8703, 9049,
-            9676, 10244, 10927, 11765, 12363, 12570, 12982, 13834, 14709, 15629,
-            16824, 17879, 18393, 18428, 18567, 19107, 19511, 20413, 20916,
-            20903, 20602, 21046, 21570, 21741, 22251, 22537, 22187, 22412,
-            22683, 23646, 23867, 24981, 25536, 25093, 25142, 25287, 25629,
-            26064, 26743, 26816, 27147, 26863, 27077, 28154, 29278, 30369,
-            31098, 31694, 32477, 34037, 36052, 37187, 38031, 38729, 39905,
-            40908, 43423, 46780, 51125, 55238, 58622, 61449, 62930, 63648,
-            65118, 66628, 68321, 69983, 71129, 69352, 66436, 66106, 65152,
-            64535, 63663, 60933, 58007, 55515, 53532, 51764, 50422, 49430,
-            46319, 43743, 41028, 38332, 36288, 34876, 33400, 31536, 29199,
-            27889, 26993, 25376, 24489, 23374, 22614, 20331, 19272, 18870,
-            18336, 17841, 17487, 16780, 16109, 15313, 14917, 14463, 14325,
-            14013, 13134, 12738, 12380, 12244, 12120, 12155, 12154, 11734,
-            11581, 11648, 11810, 12058, 12312, 12279, 12128, 11964, 12217,
-            12570, 12849, 13302, 13271, 13131, 13325, 13833, 14571, 15239,
-            16162, 16738, 17059, 17535, 18669, 20100, 21409, 22499, 23347,
-            23703, 24360, 25844, 27362, 28744, 29558, 30327, 29885, 30920,
-            32198, 34543, 36493, 38600, 40425, 40714, 41907, 44048, 46115,
-            48065, 49674, 51167, 51606, 52439, 54098, 56169, 57119, 58722,
-            60156, 61292, 61715, 61716, 62453, 63315, 64966, 67038, 68061,
-            69255, 70104, 71144, 72760, 73424, 73235, 70565, 68228, 66835,
-            66721, 65752, 64765, 63968, 61541, 60260, 59210, 58515, 56022,
-            55439, 53676, 51512, 49400, 46897, 45419, 43211, 42051, 40992,
-            39005, 37068, 35268, 33943, 32235, 31250, 30530, 28228, 25809,
-            24317, 22969, 21134, 20257, 19778, 18722, 18119, 17907, 17910,
-            17349, 17210, 17017, 16531, 16159, 16272, 16249, 16192, 16350,
-            16199, 15739, 15423, 16127, 16629, 17015, 17906, 18332, 18354,
-            18873, 20047, 21555, 23244, 25121, 26315, 26612, 27797, 29973,
-            33006, 35017, 35436, 37223, 38793, 42267, 47829, 54401, 61513,
-            69183, 75631, 79573, 86144, 93685, 102551, 109705, 117047, 123044,
-            126268, 126674, 129956, 137246, 145674, 153626, 156406, 157758,
-            161699, 168699, 181106, 193355, 203540, 211710, 209563, 212567,
-            217971, 225403, 229624, 231359, 231596, 215627, 208512, 205577,
-            204310, 199984, 191003, 184559, 177367, 165207, 157731, 150024,
-            140946, 133515, 123774, 112159, 104034, 96586, 90597, 83869, 77198,
-            70628, 65164, 58190, 51671, 47557, 42895, 39384, 36683, 33850,
-            30919, 27943, 25513, 23467, 21041, 18867, 17457, 15555, 14122,
-            12809, 11906, 10871, 10351, 9554, 8628, 8061, 7602, 7135, 6641,
-            6349, 5944, 5497, 5079, 4774, 4389, 4101, 3917, 3691, 3317, 3172,
-            3031, 2853, 2776, 2781, 2589, 2422, 2336, 2280, 2160, 2112, 2128,
-            2023, 1882, 1856, 1860, 1823, 1789, 1779, 1715, 1544, 1533, 1512,
-            1484, 1402, 1401, 1357, 1257, 1235, 1211, 1147, 1132, 1073, 1040,
-            1050, 1049, 1013, 1000, 1012, 1044, 1007, 999, 1019, 1052, 1065,
-            1074, 1085, 1044, 1078, 1115, 1155, 1214, 1257, 1325, 1348, 1386,
-            1483, 1609, 1754, 1880, 1995, 1975, 2064, 2222, 2509, 2781, 3048,
-            3328, 3792, 4628, 6619, 10020, 15149, 22051, 29210, 34797, 40673,
-            50273, 64605, 81748, 99772, 116869, 134320, 154291, 183162, 216960,
-            252786, 290671, 322100, 344062, 375697, 415806, 459980, 503133,
-            539357, 580342, 595410, 620913, 662065, 713372, 739198, 778808,
-            799891, 803176, 818933, 836905, 861630, 872594, 868621, 855217,
-            838231, 832443, 838051, 839753, 838264, 829097, 827330, 803669,
-            782369, 783151, 762066, 738662, 728605, 716006, 703137, 681938,
-            675315, 664940, 655063, 642761, 638444, 611330, 592755, 590488,
-            592736, 578501, 570129, 561661, 542272, 529120, 522454, 521174,
-            515459, 503950, 492387, 471374, 445129, 420521, 424988, 413879,
-            409000, 410207, 402061, 400896, 410636, 422681, 439509, 444365,
-            451289, 441490, 447295, 455293, 469458, 472706, 477055, 483377,
-            484087, 486325, 488519, 501065, 497209, 493422, 486915, 473672,
-            460612, 453329, 455408, 451035, 434325, 427444, 413638, 405799,
-            403437, 407875, 400739, 391279, 375218, 357519, 347707, 335590,
-            324009, 305548, 297044, 303068, 301546, 307647, 304814, 318635,
-            327917, 338725, 344529, 336262, 330474, 330661, 335298, 333603,
-            330466, 327375, 317479, 308939, 307145, 303773, 292640, 282427,
-            272052, 254004, 239830, 228426, 221486, 210630, 199558, 190716,
-            178595, 171307, 166582, 164924, 157737, 152169, 148346, 140633,
-            136050, 135807, 136016, 133129, 130743, 129980, 125106, 123900,
-            126845, 129960, 130451, 131314, 132495, 130069, 132220, 140219,
-            149887, 157437, 164545, 171958, 177200, 190402, 220173, 248843,
-            274767, 301463, 329566, 351418, 384017, 453873, 512370, 571200,
-            629238, 681232, 712415, 725682, 797212, 909002, 1015905, 1105591,
-            1188721, 1246299, 1290690, 1409110, 1521256, 1629402, 1714691,
-            1720212, 1730020, 1734295, 1828360, 1876077, 1911163, 1926339,
-            1946004, 1927404, 1906161, 1939435, 1993062, 1965594, 1931643,
-            1931291, 1869802, 1802379,
-          ],
-          
-          borderColor:"rgb(80,80,200)",
+          data: myChartData,
+          borderColor: "rgb(80,80,200)",
         },
       ],
-      labels:myChartDate.value,
+      labels: myChartDate.value,
     },
     options: {
       scales: {
@@ -260,6 +205,74 @@ onMounted(async () => {
       },
     },
   });
-});
+};
+const setAccuInfo = async (name: string): Promise<void> => {
+  // stateをリセット
+  // globalState.myChartData = [];
+  // globalState.myChartData2 = [];
+  const url =
+    "https://www.stopcovid19.jp/data/mhlw_go_jp/opendata/requiring_inpatient_care_etc_daily.csv";
+  // 取得したデータ
+  let preAccuInfo: AccInfo[] = [];
+  // 取得した要入院者数をセット
+  Papa.parse(url, {
+    download: true,
+    header: true,
+    complete: function (results) {
+      const res1: any = results.data;
+      let id = 0;
+      for (let area of res1) {
+        id = id + 1;
+        preAccuInfo.push(
+          new AccInfo(
+            id,
+            area.Date,
+            name,
+            area[`(${name}) Requiring inpatient care`],
+            0
+          )
+        );
+      }
+      // 取得したデータをChart.jsに沿う形に組み替え
+      for (let data1 of preAccuInfo) {
+        console.log("要入院発火");
+        myChartData.push(
+          new MyChartData(data1.date, data1.dischangedFromHospital)
+        );
+      }
+    },
+  });
+  const url2 =
+    "https://code4fukui.github.io/fdma_go_jp/emergencytransport_difficult_all.csv";
+  Papa.parse(url2, {
+    download: true,
+    header: true,
+    complete: function (results) {
+      const res2: any = results.data;
+      // 取得した搬送困難事案数をセット
+      for (let r of res2) {
+        const lastDay = String(r.終了日).replace("-0", "-");
+        const lastDay2 = lastDay.replace("-0", "-");
+        const lastDay3 = lastDay2.replace("-", "/");
+        const lastDay4 = lastDay3.replace("-", "/");
+        for (let d of preAccuInfo) {
+          if (lastDay4 == d.date) {
+            d.requiringInpatient = r.救急搬送困難事案数;
+          }
+        }
+      }
+      // 取得したデータをChart.jsに沿う形に組み替え
+      for (let data2 of preAccuInfo) {
+        console.log("搬送発火");
+        if (data2.requiringInpatient > 0) {
+          myChartData2.push(
+            new MyChartData(data2.date, data2.requiringInpatient)
+          );
+        }
+      }
+      // console.log(globalState.myChartData2);
+    },
+  });
+};
 </script>
 <style scoped></style>

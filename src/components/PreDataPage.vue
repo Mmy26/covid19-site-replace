@@ -5,6 +5,7 @@ import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
 import { useRoute } from "vue-router";
+import router from "../router/router";
 import { AccInfo } from "../types/AccInfo";
 
 // storeの定義
@@ -23,7 +24,14 @@ const itemName = route.params.id;
 
 const preInfoCurrentAverage = ref(0);
 
-const preDataInfo = ref<PreInfo>(new PreInfo(0,"","",0,0,0,0,0,0));
+const preDataInfo = ref<PreInfo>(new PreInfo(0, "", "", 0, 0, 0, 0, 0, 0));
+
+/**
+ * トップページへ遷移.
+ */
+const toTopPage = () => {
+  router.push("/");
+};
 onMounted(async () => {
   //storeのエラーを回避
   if (!store) {
@@ -51,49 +59,48 @@ onMounted(async () => {
   // 円グラフのデータ
   const myChartData = new Array<number>();
 
-  preDataInfo.value = preInfo.value[itemId.value - 1]
+  preDataInfo.value = preInfo.value[itemId.value - 1];
 
   preInfoCurrentAverage.value = preDataInfo.value.currentAvarage;
   myChartData.push(preDataInfo.value.currentPatient);
   // 予備病床数
   let remainingSickBed =
-    preDataInfo.value.totalSickBed -
-    preDataInfo.value.currentPatient;
-  myChartData.push(remainingSickBed);
+    preDataInfo.value.totalSickBed - preDataInfo.value.currentPatient;
+  if (remainingSickBed > 0) {
+    myChartData.push(remainingSickBed);
+  }
   let myChart = new Chart(ctx as ChartItem, {
     type: "bubble",
+
     data: {
+      labels: [
+        `現在患者数(${preDataInfo.value.currentPatient})`,
+        // `想定病床残数(${remainingSickBed})`,
+      ],
       datasets: [
         {
           type: "doughnut",
-          label: "現在患者数",
           data: myChartData,
-          backgroundColor:"rgb(230,0,0)"
+          backgroundColor: "rgb(230,0,0)",
         },
-      ],     
+      ],
     },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-        },
-      },
-    },
+    options: {},
   });
   console.log(preDataInfo);
 
   // 線グラフ
-  await store.setAccuInfo( preDataInfo.value.nameEng);
+  await store.setAccuInfo(preDataInfo.value.nameEng);
   accuInfo.value = store.accuInfo.value;
-    // 入院を要する者の数
+  // 入院を要する者の数
   const myChartData2 = ref<number[]>([]);
-  for(let data of accuInfo.value){
-    myChartData2.value.push(data.dischangedFromHospital)
+  for (let data of accuInfo.value) {
+    myChartData2.value.push(data.dischangedFromHospital);
   }
   // グラフの日時
-  const myChartDate = ref<Date[]>([])
-  for(let data of accuInfo.value){
-    myChartDate.value.push(data.date)
+  const myChartDate = ref<string[]>([]);
+  for (let data of accuInfo.value) {
+    myChartDate.value.push(data.date);
   }
 
   const ctx2 = document.getElementById("myChart2");
@@ -105,7 +112,6 @@ onMounted(async () => {
           type: "bar",
           label: "搬送困難事案",
           data: myChartData2.value,
-          
         },
         {
           type: "line",
@@ -203,11 +209,11 @@ onMounted(async () => {
             1946004, 1927404, 1906161, 1939435, 1993062, 1965594, 1931643,
             1931291, 1869802, 1802379,
           ],
-          
-          borderColor:"rgb(80,80,200)",
+
+          borderColor: "rgb(80,80,200)",
         },
       ],
-      labels:myChartDate.value,
+      labels: myChartDate.value,
     },
     options: {
       scales: {
@@ -222,16 +228,29 @@ onMounted(async () => {
 <template>
   <p>{{ itemName }} 現在患者数/対策病床数 {{ preInfoCurrentAverage }}%</p>
   <canvas id="myChart" width="400" height="400"></canvas>
-  累積陽性者: {{preDataInfo.accumulationPatient.toLocaleString()}}人 累積退院者: {{preDataInfo.accumulationExits}}人
-累積死者: {{preDataInfo.accumulationDead.toLocaleString()}}人 対策病床数: {{preDataInfo.totalSickBed.toLocaleString()}}床
-現在患者数 出典: 厚生労働省 新型コロナウイルス感染症 各都道府県の検査陽性者の状況(更新日: 2022-08-21)
-一般社団法人 日本耳鼻咽喉科学会定義におけるハイリスク地域（現在患者数 {{preDataInfo.currentPatient}}名 >= 10名）
-対策病床数 医療機関504床+宿泊施設630室 出典: 新型コロナウイルス対策病床数オープンデータ(発表日: 2022-08-17)
-
-(参考) 臨床工学技士:50人 マスク専用含む人工呼吸器取扱:123台 ECMO装置取扱:9台
-2020年2月回答 出典: 一般社団法人 日本呼吸療法医学会 公益社団法人 日本臨床工学技士会
+  累積陽性者: {{ preDataInfo.accumulationPatient.toLocaleString() }}人
+  累積退院者: {{ preDataInfo.accumulationExits }}人 累積死者:
+  {{ preDataInfo.accumulationDead.toLocaleString() }}人 対策病床数:
+  {{ preDataInfo.totalSickBed.toLocaleString() }}床
+  <p class="text-xs">
+    現在患者数 出典: 厚生労働省 新型コロナウイルス感染症
+    各都道府県の検査陽性者の状況(更新日: 2022-08-21) 一般社団法人
+    日本耳鼻咽喉科学会定義におけるハイリスク地域（現在患者数
+    {{ preDataInfo.currentPatient }}名 >= 10名） 対策病床数
+    医療機関504床+宿泊施設630室 出典:
+    新型コロナウイルス対策病床数オープンデータ(発表日: 2022-08-17)
+  </p>
+  <p class="text-xs">
+    (参考) 臨床工学技士:50人 マスク専用含む人工呼吸器取扱:123台 ECMO装置取扱:9台
+    2020年2月回答 出典: 一般社団法人 日本呼吸療法医学会 公益社団法人
+    日本臨床工学技士会
+  </p>
   <canvas id="myChart2" width="400" height="400"></canvas>
-  <button>閉じる</button>
-  <button>公式サイトへ</button>
+  <button
+    @click="toTopPage"
+    class="bg-gray-400 hover:bg-glay-700 font-bold py-2 px-4 rounded m-2"
+  >
+    閉じる
+  </button>
 </template>
 <style scoped></style>

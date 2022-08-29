@@ -4,27 +4,31 @@ import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
 import { AccInfo } from "../types/AccInfo";
 import Papa from "papaparse";
-import XLSX from "xlsx";
+import { MyChartData } from "../types/myChartData";
 
-
-type State = { totalInfo: TotalInfo; infoOnEachPrefecture: Array<PreInfo>,accuInfo:Array<AccInfo> };
+type State = {
+  totalInfo: TotalInfo;
+  infoOnEachPrefecture: Array<PreInfo>;
+  accuInfo: Array<AccInfo>;
+  myChartData: Array<MyChartData>;
+  myChartData2: Array<MyChartData>;
+};
 
 export const useTotalInfoProvider = () => {
   // state
   const globalState = reactive<State>({
-    /**
-     * 全国の最新情報.
-     */
+    // 全国の最新情報.
     totalInfo: new TotalInfo(1, 1, 1, 1, 1, 1),
-    /**
-     * 各県の最新情報.
-     */
+    // 各県の最新情報.
     infoOnEachPrefecture: [],
-    /**
-     * 累入院者数と搬送困難件数情報.
-     */
-    accuInfo:[],
+    // 累入院者数と搬送困難件数情報.
+    accuInfo: [],
+    // 搬送困難件数をグラフにセット
+    myChartData: [],
+    // 要入院者数をグラフにセット
+    myChartData2: [],
   });
+
   // acitions
   /**
    * APIから取得した全国の情報をstateにセットする.
@@ -45,16 +49,14 @@ export const useTotalInfoProvider = () => {
         totalSickBed.value;
     }
 
-    globalState.totalInfo = ref(
-      new TotalInfo(
-        Math.trunc((response.data.ncurrentpatients / totalSickBed.value) * 100),
-        response.data.ncurrentpatients.toLocaleString(),
-        totalSickBed.value.toLocaleString() as any,
-        response.data.npatients.toLocaleString(),
-        response.data.ndeaths.toLocaleString(),
-        response.data.nexits.toLocaleString()
-      )
-    ).value;
+    globalState.totalInfo = new TotalInfo(
+      Math.trunc((response.data.ncurrentpatients / totalSickBed.value) * 100),
+      response.data.ncurrentpatients.toLocaleString(),
+      totalSickBed.value.toLocaleString() as any,
+      response.data.npatients.toLocaleString(),
+      response.data.ndeaths.toLocaleString(),
+      response.data.nexits.toLocaleString()
+    );
   };
   /**
    * APIから取得した各県の情報をstateにセットする.
@@ -101,56 +103,87 @@ export const useTotalInfoProvider = () => {
       }
     }
   };
-  const setAccuInfo = async(name)=>{
+  /**
+   * APIから取得したChartの情報をstateにセットする.
+   */
+  const setAccuInfo = async (name: string): Promise<void> => {
+    // stateをリセット
+    // globalState.myChartData = [];
+    // globalState.myChartData2 = [];
     const url =
       "https://www.stopcovid19.jp/data/mhlw_go_jp/opendata/requiring_inpatient_care_etc_daily.csv";
-
+    // 取得したデータ
+    let preAccuInfo: AccInfo[] = [];
+    // 取得した要入院者数をセット
     Papa.parse(url, {
       download: true,
       header: true,
       complete: function (results) {
-        const data: any = results.data;
-        console.log(data);
-        console.log(data[0].Date);
-        console.log(data[0]["(ALL) Requiring inpatient care"]);
+        const res1: any = results.data;
         let id = 0;
-        globalState.accuInfo=[];
-        for(let area of data){
-          id = id +1;
-         const accuInfoData = new AccInfo(0,new Date,"",0,0);
-         accuInfoData.id = id;
-         accuInfoData.date = area.Date;
-         accuInfoData.name = name;
-         accuInfoData.dischangedFromHospital = area[`(${name})  Requiring inpatient care`];
-         globalState.accuInfo.push(accuInfoData)
+        for (let area of res1) {
+          id = id + 1;
+          preAccuInfo.push(
+            new AccInfo(
+              id,
+              area.Date,
+              name,
+              area[`(${name}) Requiring inpatient care`],
+              0
+            )
+          );
         }
-        console.log(globalState.accuInfo);
+        // 取得したデータをChart.jsに沿う形に組み替え
+        for (let data1 of preAccuInfo) {
+          console.log("要入院発火");
+          globalState.myChartData.push(
+            new MyChartData(data1.date, data1.dischangedFromHospital)
+          );
+        }
+        console.log(globalState.myChartData);
       },
-    },);
-    // const url2 = "https://www.fdma.go.jp/disaster/coronavirus/items/coronavirus_data.xlsx";
-    // Papa.parse(url2, {
-    //   download: true,
-    //   header: true,
-    //   complete: function (results) {
-    //     const data: any = results.data;
-    //     console.log(data);
-    //     console.log(data[0].Date);
-    //     console.log(data[0]["(ALL) Requiring inpatient care"]);
-    //     const id = 0;
-    //     for(let area of data){
-    //      const accuInfoData = new AccInfo(0,new Date,"",0,0);
-    //      accuInfoData.id = id;
-    //      accuInfoData.date = area.Date;
-    //      accuInfoData.name = name;
-    //      accuInfoData.dischangedFromHospital = area[`(${name}) Discharged from hospital or released from treatment`];
-    //      globalState.accuInfo.push(accuInfoData)
-    //     }
-    //     console.log(globalState.accuInfo);
-    //   },
-    // },);
-  }
+    });
+    const url2 =
+      "https://code4fukui.github.io/fdma_go_jp/emergencytransport_difficult_all.csv";
+    Papa.parse(url2, {
+      download: true,
+      header: true,
+      complete: function (results) {
+        const res2: any = results.data;
+        // 取得した搬送困難事案数をセット
+        for (let r of res2) {
+          const lastDay = String(r.終了日).replace("-0", "-");
+          const lastDay2 = lastDay.replace("-0", "-");
+          const lastDay3 = lastDay2.replace("-", "/");
+          const lastDay4 = lastDay3.replace("-", "/");
+          for (let d of preAccuInfo) {
+            if (lastDay4 == d.date) {
+              d.requiringInpatient = r.救急搬送困難事案数;
+            }
+          }
+        }
+        // stateにセット
+        globalState.accuInfo = preAccuInfo;
+        // 取得したデータをChart.jsに沿う形に組み替え
+        for (let data2 of preAccuInfo) {
+          console.log("搬送発火");
+          if (data2.requiringInpatient > 0) {
+            globalState.myChartData2.push(
+              new MyChartData(data2.date, data2.requiringInpatient)
+            );
+          }
+        }
+        // console.log(globalState.myChartData2);
+      },
+    });
+  };
 
-  return { ...toRefs(globalState), setTotalInfo, setInfoOnEachPrefecture,setAccuInfo };
+  return {
+    ...toRefs(globalState),
+    setTotalInfo,
+    setInfoOnEachPrefecture,
+    setAccuInfo,
+  };
 };
 
 type storeType = ReturnType<typeof useTotalInfoProvider>;

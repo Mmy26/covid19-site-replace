@@ -2,7 +2,7 @@
 
 <template>
   <footer
-    class="p-4 text-sm text-center bg-white rounded-lg items-center shadow"
+    class="p-4 text-xs text-center bg-white rounded-lg items-center shadow"
   >
     データ出典
     <p>
