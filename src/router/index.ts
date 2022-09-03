@@ -3,7 +3,6 @@ import * as VueRouter from "vue-router";
 import { createRouter, createWebHistory } from "vue-router";
 
 import Top from "../components/Top.vue";
-import Test from "../components/Test.vue";
 import PreDataPage from "../components/PreDataPage.vue";
 
 const routes = [

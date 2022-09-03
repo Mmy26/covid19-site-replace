@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { onMounted, inject, ref, watchEffect, onBeforeMount } from "vue";
+import { inject, ref, onBeforeMount } from "vue";
 import Chart, { ChartItem } from "chart.js/auto";
 import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
 import router from "../router";
-import { AccInfo } from "../types/AccInfo";
 import { MyChartData } from "../types/MyChartData";
-import Papa from "papaparse";
-import { watch } from "fs";
+
 // storeの定義
 const store = inject(totalInfoKey);
 // 全国の最新データ
