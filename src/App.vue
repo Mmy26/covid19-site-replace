@@ -1,15 +1,16 @@
+<script setup lang="ts">
+import { RouterLink, RouterView } from "vue-router";
+import StoreProvider from "./StoreProvider.vue";
+import Header from "./components/Header.vue";
+import Footer from "./components/Footer.vue";
+</script>
+
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" />
-  <HelloWorld msg="Hello Vue 3.0 + Vite" />
+  <StoreProvider>
+    <Header />
+    <RouterView />
+    <Footer />
+  </StoreProvider>
 </template>
 
-<script>
-import HelloWorld from './components/HelloWorld.vue'
-
-export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
-</script>
+<style></style>
