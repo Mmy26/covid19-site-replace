@@ -4,7 +4,7 @@ import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
 import { AccInfo } from "../types/AccInfo";
 import Papa from "papaparse";
-import { MyChartData } from "../types/myChartData";
+import { MyChartData } from "../types/MyChartData";
 import { EcmoData } from "../types/Ecmo";
 
 type State = {
