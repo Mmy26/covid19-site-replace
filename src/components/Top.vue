@@ -6,7 +6,7 @@ import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
 import router from "../router";
 import { AccInfo } from "../types/AccInfo";
-import { MyChartData } from "../types/myChartData";
+import { MyChartData } from "../types/MyChartData";
 import Papa from "papaparse";
 import { watch } from "fs";
 // storeの定義
