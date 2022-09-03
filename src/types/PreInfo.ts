@@ -1,3 +1,4 @@
+// 各県別のデータ型
 export class PreInfo {
   constructor(
     // id
@@ -12,12 +13,18 @@ export class PreInfo {
     private _currentPatient: number,
     // 対策病床数
     private _totalSickBed: number,
+    // 対策病床数
+    private _医療機関: number,
+    // 対策病床数
+    private _宿泊施設: number,
     // 累積患者数
     private _accumulationPatient: number,
     // 累積死者数
     private _accumulationDead: number,
     // 退院者数
-    private _accumulationExits: number
+    private _accumulationExits: number,
+    // 前日比
+    private _dcurrentpatients: number
   ) {}
 
   public get id(): number {
@@ -44,7 +51,6 @@ export class PreInfo {
   public get currentAvarage(): number {
     return this._currentAvarage;
   }
-  
 
   public set currentAvarage(currentAvarage: number) {
     this._currentAvarage = currentAvarage;
@@ -60,9 +66,22 @@ export class PreInfo {
   public get totalSickBed(): number {
     return this._totalSickBed;
   }
-
   public set totalSickBed(totalSickBed: number) {
     this._totalSickBed = totalSickBed;
+  }
+  public get 医療機関(): number {
+    return this._医療機関;
+  }
+  public set 医療機関(医療機関: number) {
+    this._医療機関 = 医療機関;
+  }
+
+  public get 宿泊施設(): number {
+    return this._totalSickBed;
+  }
+
+  public set 宿泊施設(宿泊施設: number) {
+    this._宿泊施設 = 宿泊施設;
   }
   public get accumulationPatient(): number {
     return this._accumulationPatient;
@@ -84,5 +103,12 @@ export class PreInfo {
 
   public set accumulationExits(accumulationExits: number) {
     this._accumulationExits = accumulationExits;
+  }
+  public get dcurrentpatients(): number {
+    return this._dcurrentpatients;
+  }
+
+  public set dcurrentpatients(dcurrentpatients: number) {
+    this._dcurrentpatients = dcurrentpatients;
   }
 }

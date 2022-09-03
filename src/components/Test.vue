@@ -1,22 +1,39 @@
-<script setup lang="ts">
-import Papa from "papaparse";
-import { onMounted, ref } from "vue";
-
-const url =
-  "https://www.stopcovid19.jp/data/mhlw_go_jp/opendata/requiring_inpatient_care_etc_daily.csv";
-
-onMounted(() => {
-  Papa.parse(url, {
-    download: true,
-    header: true,
-    complete: function (results) {
-      const data: any = results.data;
-      console.log(data);
-      console.log(data[0].Date);
-      console.log(data[0]["(ALL) Requiring inpatient care"]);
+<script>
+import { Chart } from "chart.js";
+var ctx = document.getElementById("mychart");
+var myChart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    datasets: [
+      {
+        label: "Red",
+        data: [20, 35, 40, 30, 45, 35, 40],
+        borderColor: "#f88",
+      },
+      {
+        label: "Green",
+        data: [20, 15, 30, 25, 30, 40, 35],
+        borderColor: "#484",
+      },
+      {
+        label: "Blue",
+        data: [30, 25, 10, 5, 25, 30, 20],
+        borderColor: "#48f",
+      },
+    ],
+  },
+  options: {
+    y: {
+      min: 0,
+      max: 60,
     },
-  });
+  },
 });
 </script>
-<template>test</template>
+<template>
+  <div style="width: 400px">
+    <canvas id="mychart"></canvas>
+  </div>
+</template>
 <style scoped></style>

@@ -1,3 +1,4 @@
+// chartに使用する過去の累積データを保管する型
 export class AccInfo {
   constructor(
     // id

@@ -1,3 +1,4 @@
+// chartに使用するデータ型
 export class MyChartData {
   constructor(
     // ラベル

@@ -1,159 +1,60 @@
-<template>
-  <div
-    id="nav"
-    class="lg:flex lg:flex-row justify-center items-center auto-cols-auto flex flex-col"
-  >
-    <table
-      class="w-8/12 aspect-video border-collapse border-2 border-red-700 basis-1/2 m-7"
-    >
-      <thead>
-        <tr>
-          <th class="border-collapse border-2 border-red-700 lg:text-xs">
-            現在患者数/対策病床数
-          </th>
-          <th class="border-collapse border-2 border-red-700">現在患者数</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="font-black bg-red-700 text-white">
-            {{ totalInfo.currentAvarage }}%
-          </td>
-          <td class="font-black bg-red-700 text-white">
-            {{ totalInfo.currentPatient }}人
-          </td>
-        </tr>
-      </tbody>
-      <thead>
-        <tr>
-          <th class="border-collapse border-2 border-red-700">累積退院者</th>
-          <th class="border-collapse border-2 border-red-700">死亡者</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="font-black bg-red-700 text-white">
-            {{ totalInfo.accumulationExits }}人
-          </td>
-          <td class="font-black bg-red-700 text-white">
-            {{ totalInfo.accumulationDead }}人
-          </td>
-        </tr>
-      </tbody>
-      <tbody>
-        <tr>
-          <td class="border-collapse border-2 border-red-700">
-            対策病床数 {{ totalInfo.totalSickBed }}床
-          </td>
-          <td class="border-collapse border-2 border-red-700">
-            PCR検査陽性者数 {{ totalInfo.accumulationPatient }}人
-          </td>
-        </tr>
-      </tbody>
-      <tbody>
-        <tr>
-          <td
-            class="col-span-2 text-center border-collapse border-1 border-red-700"
-          >
-            <p class="text-xs">
-              臨床工学技士 14,378人 / 人工呼吸器 28,197台 / ECMO 1,412台
-              2020年2月回答 出典 一般社団法人 日本呼吸療法医学会 公益社団法人
-              日本臨床工学技士会
-            </p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="text-xs">
-      新型コロナ対策病床数は「感染症指定医療機関の指定状況」の下記合計と仮定
-      特定 一種 二種(感染) 二種(結核) 二種(一般/精神)
-      「新型コロナウイルス対策病床数オープンデータ」を使用
-      「新型コロナウイルス患者数オープンデータ」を使用(速報)
-    </p>
-    <div class="basis-1/2 w-8/12">
-      <div class="flex bg-white col-auto">
-        <button class="flex-1 text-white text-center bg-black px-4 py-2 m-2">
-          {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}
-          (全国)現在患者数/対策病床数
-        </button>
-      </div>
-      <div class="flex bg-white overflow-y-auto">
-        <button
-          v-for="preLocalInfo of preInfo"
-          :key="preLocalInfo.id"
-          class="flex-1 text-white text-center bg-black px-4 py-2 m-2"
-          v-on:click="clickPreData(preLocalInfo.name)"
-        >
-          {{ preLocalInfo.name }}
-          {{ preLocalInfo.currentAvarage }}%
-          {{ preLocalInfo.currentPatient }}/{{ preLocalInfo.totalSickBed }}
-        </button>
-      </div>
-    </div>
-
-    <p class="text-xs">
-      新型コロナウイルス感染症（国内事例） 現在患者数 / 対策病床数
-      ※軽症者等は自宅療養など、病床を使用しないことがあります（詳細）
-      （現在患者数 前日より増加 前日より減少） COVID-19
-      日本の新型コロナウイルス概況
-    </p>
-    <canvas id="myChart" width="400" height="400"></canvas>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { onMounted, inject, reactive, ref } from "vue";
+import { onMounted, inject, ref, watchEffect, onBeforeMount } from "vue";
 import Chart, { ChartItem } from "chart.js/auto";
 import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
 import { PreInfo } from "../types/PreInfo";
-import router from "../router/router";
+import router from "../router";
 import { AccInfo } from "../types/AccInfo";
 import { MyChartData } from "../types/myChartData";
 import Papa from "papaparse";
+import { watch } from "fs";
 // storeの定義
 const store = inject(totalInfoKey);
 // 全国の最新データ
-const totalInfo = ref(new TotalInfo(0, 0, 0, 0, 0, 0));
+const totalInfo: any = ref(new TotalInfo(0, 0, 0, 0, 0, 0, "", ""));
 // 各県の最新データ
-const preInfo = ref(new Array<PreInfo>());
-// 累積データ
-const accuInfo = ref<AccInfo[]>([]);
+const preInfo = ref<PreInfo[]>([]);
 // myChartのデータ
-let myChartData: { x: string; y: number }[] = [];
+const myChartData = ref<MyChartData[]>([]);
 // myChart2のデータ
-let myChartData2: { x: string; y: number }[] = [];
+const myChartData2 = ref<MyChartData[]>([]);
 // chartのラベル
 const myChartDate = ref<string[]>([]);
 
-onMounted(async (): Promise<void> => {
-  //storeのエラーを回避
+const chartFlag = ref(false);
 
+onBeforeMount(async (): Promise<void> => {
+  // リセット
+  totalInfo.value = new TotalInfo(0, 0, 0, 0, 0, 0, "", "");
+
+  //storeのエラーを回避
   if (!store) {
     throw new Error("");
   }
   await store.setTotalInfo();
   store.setInfoOnEachPrefecture();
-  await setAccuInfo("ALL");
-  // console.log("戻った");
+  await store.setMyChartData("ALL");
 
   totalInfo.value = store.totalInfo.value;
-  // console.log(totalInfo.value);
+  // console.log(totalInfo.value.totalSickBed);
 
+  totalInfo.value.totalSickBed = store.totalInfo.value.totalSickBed;
+  // console.log(store.totalInfo.value);
+
+  totalInfo.value.currentPatient =
+    store.totalInfo.value.currentPatient.toLocaleString();
+  totalInfo.value.currentAvarage =
+    store.totalInfo.value.currentAvarage.toLocaleString();
+
+  preInfo.value.splice(0);
   preInfo.value = store.infoOnEachPrefecture.value;
-  accuInfo.value = store.accuInfo.value;
-  // myChartData = store.myChartData.value;
-  // myChartData2 = store.myChartData2.value;
-  // console.log("myChartData.value", myChartData);
-  // console.log("myChartData2.value", myChartData2);
-  // グラフの日時
-  for (let data of accuInfo.value) {
-    myChartDate.value.push(data.date);
-  }
-  // setTimeout(() => {
-  chart();
-  // }, 5000);
+  setTimeout(() => {
+    chartFlag.value = true;
+    chart();
+  }, 500);
 });
+
 /**
  * 各県へリンク.
  * @param data
@@ -162,117 +63,270 @@ const clickPreData = (data: string) => {
   router.push(`/${data}`);
 };
 /**
- * stateにデータをセット.
- */
-const dataSet = () => {
-  if (!store) {
-    throw new Error("");
-  }
-  store.setTotalInfo();
-  store.setInfoOnEachPrefecture();
-  setAccuInfo("ALL");
-};
-
-/**
  * 取得したデータをChartにセット.
  */
 const chart = () => {
-  const ctx = document.getElementById("myChart");
-  new Chart(ctx as ChartItem, {
-    type: "bubble",
+  //storeのエラーを回避
+  if (!store) {
+    throw new Error("");
+  }
+  const ctx = document.getElementById("myChart") as ChartItem;
+  console.log("発火");
+
+  if (!ctx) {
+    throw new Error("");
+  }
+
+  new Chart(ctx, {
+    type: "line",
     data: {
       datasets: [
         {
-          type: "bar",
           label: "搬送困難事案",
-          data: myChartData2,
-          borderColor: "rgb(80,80,200)",
+          data: [...store.chartHospitalData.value],
+          backgroundColor: "rgb(250,0,50)",
+          yAxisID: "yleft",
         },
         {
-          type: "line",
           label: "入院を要する者",
-          data: myChartData,
+          data: [...store.chartPatientsData.value],
           borderColor: "rgb(80,80,200)",
+          yAxisID: "yright",
         },
       ],
-      labels: myChartDate.value,
+      labels: [...store.myChartDate.value],
     },
     options: {
       scales: {
-        y: {
+        yleft: {
+          position: "left",
           beginAtZero: true,
+          min: 0,
+          title: {
+            display: true,
+            text: "搬送困難事案",
+          },
+        },
+
+        yright: {
+          position: "right",
+          beginAtZero: true,
+          min: 0,
+          title: {
+            display: true,
+            text: "入院を要する者",
+          },
         },
       },
     },
   });
 };
-const setAccuInfo = async (name: string): Promise<void> => {
-  // stateをリセット
-  // globalState.myChartData = [];
-  // globalState.myChartData2 = [];
-  const url =
-    "https://www.stopcovid19.jp/data/mhlw_go_jp/opendata/requiring_inpatient_care_etc_daily.csv";
-  // 取得したデータ
-  let preAccuInfo: AccInfo[] = [];
-  // 取得した要入院者数をセット
-  Papa.parse(url, {
-    download: true,
-    header: true,
-    complete: function (results) {
-      const res1: any = results.data;
-      let id = 0;
-      for (let area of res1) {
-        id = id + 1;
-        preAccuInfo.push(
-          new AccInfo(
-            id,
-            area.Date,
-            name,
-            area[`(${name}) Requiring inpatient care`],
-            0
-          )
-        );
-      }
-      // 取得したデータをChart.jsに沿う形に組み替え
-      for (let data1 of preAccuInfo) {
-        console.log("要入院発火");
-        myChartData.push(
-          new MyChartData(data1.date, data1.dischangedFromHospital)
-        );
-      }
-    },
-  });
-  const url2 =
-    "https://code4fukui.github.io/fdma_go_jp/emergencytransport_difficult_all.csv";
-  Papa.parse(url2, {
-    download: true,
-    header: true,
-    complete: function (results) {
-      const res2: any = results.data;
-      // 取得した搬送困難事案数をセット
-      for (let r of res2) {
-        const lastDay = String(r.終了日).replace("-0", "-");
-        const lastDay2 = lastDay.replace("-0", "-");
-        const lastDay3 = lastDay2.replace("-", "/");
-        const lastDay4 = lastDay3.replace("-", "/");
-        for (let d of preAccuInfo) {
-          if (lastDay4 == d.date) {
-            d.requiringInpatient = r.救急搬送困難事案数;
-          }
-        }
-      }
-      // 取得したデータをChart.jsに沿う形に組み替え
-      for (let data2 of preAccuInfo) {
-        console.log("搬送発火");
-        if (data2.requiringInpatient > 0) {
-          myChartData2.push(
-            new MyChartData(data2.date, data2.requiringInpatient)
-          );
-        }
-      }
-      // console.log(globalState.myChartData2);
-    },
-  });
-};
 </script>
-<style scoped></style>
+<template>
+  <div id="nav my-0 mx-auto">
+    <div class="lg:flex lg:flex-row auto-cols-auto flex flex-col">
+      <span class="lg:w-5/12">
+        <!-- 全国の最新データテーブル -->
+        <table
+          class="w-10/12 aspect-video mx-auto border-collapse border-2 border-red-700 m-7"
+        >
+          <thead>
+            <tr>
+              <th
+                class="border-collapse border-2 border-red-700 lg:text-xs h-7"
+              >
+                現在患者数/対策病床数
+              </th>
+              <th class="border-collapse border-2 border-red-700 h-7">
+                現在患者数
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="bg-red-700 text-white text-3xl w-1/2">
+                {{ totalInfo.currentAvarage }}
+                <span class="text-xl">%</span>
+              </td>
+              <td class="text-3xl bg-red-700 text-white w-1/2">
+                {{ totalInfo.currentPatient }}
+                <span class="text-xl">人</span>
+              </td>
+            </tr>
+          </tbody>
+          <thead>
+            <tr>
+              <th class="border-collapse border-2 border-red-700 h-7">
+                累積退院者
+              </th>
+              <th class="border-collapse border-2 border-red-700 h-7">
+                死亡者
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-3xl bg-red-700 text-white">
+                {{ totalInfo.accumulationExits }}
+                <span class="text-xl">人</span>
+              </td>
+              <td class="text-3xl bg-red-700 text-white">
+                {{ totalInfo.accumulationDead }}
+                <span class="text-xl">人</span>
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td class="border-collapse border-2 border-red-700 h-2">
+                対策病床数 {{ totalInfo.totalSickBed }}床
+              </td>
+              <td class="border-collapse border-2 border-red-700 h-2">
+                PCR検査陽性者数 {{ totalInfo.accumulationPatient }}人
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td
+                colspan="2"
+                class="col-span-2 text-center border-collapse border-1 border-red-700"
+              >
+                <p class="text-xs">
+                  臨床工学技士 14,378人 / 人工呼吸器 28,197台 / ECMO 1,412台
+                  2020年2月回答 <br />出典
+                  <a
+                    href="https://ja-ces.or.jp/info-ce/%e4%ba%ba%e5%b7%a5%e5%91%bc%e5%90%b8%e5%99%a8%e3%81%8a%e3%82%88%e3%81%b3ecmo%e8%a3%85%e7%bd%ae%e3%81%ae%e5%8f%96%e6%89%b1%e5%8f%b0%e6%95%b0%e7%ad%89%e3%81%ab%e9%96%a2%e3%81%99%e3%82%8b%e7%b7%8a/"
+                    >一般社団法人 日本呼吸療法医学会 公益社団法人
+                    日本臨床工学技士会</a
+                  >
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="w-10/12 mx-auto">
+          <p class="text-xs">
+            現在患者数 更新日: {{ totalInfo.updatePatientInfo }}
+            <br />対策病床数 発表日: {{ totalInfo.updateHospitalInfo }}<br />
+            新型コロナ対策病床数は「感染症指定医療機関の指定状況」の下記合計と仮定<br />
+            <input type="checkbox" checked />特定
+            <input type="checkbox" checked />一種
+            <input type="checkbox" checked />二種(感染)<input type="checkbox" />
+            二種(結核)<input type="checkbox" /> 二種(一般/精神)<br />
+            <input
+              type="checkbox"
+              checked
+            />「新型コロナウイルス対策病床数オープンデータ」を使用<br />
+            <input
+              type="checkbox"
+            />「新型コロナウイルス患者数オープンデータ」を使用(速報)
+          </p>
+        </div>
+        <!-- テーブル終わり -->
+      </span>
+
+      <div class="lg:w-7/12">
+        <!-- 各所の最新データ -->
+        <div class="bg-white col-auto grid grid-cols-7">
+          <div
+            class="flex-1 col-span-2 cursor-pointer text-white text-sm text-center bg-black px-4 py-2 m-2"
+            v-on:click="clickPreData('全国')"
+          >
+            <p class="">
+              {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}
+              (全国)現在患者数/対策病床数
+            </p>
+          </div>
+          <div
+            v-for="preLocalInfo of preInfo"
+            :key="preLocalInfo.id"
+            v-on:click="clickPreData(preLocalInfo.name)"
+          >
+            <div
+              class="cursor-pointer text-white text-center text-sm bg-black py-2 m-2"
+            >
+              <span class="text-xs font-black">
+                {{ preLocalInfo.name }}<br />
+                {{ preLocalInfo.currentAvarage }}%
+              </span>
+              <span v-if="preLocalInfo.dcurrentpatients > 0">
+                <img
+                  src="../assets/trendarrow01.svg"
+                  alt="trender"
+                  class="trender"
+                />
+              </span>
+              <span v-if="preLocalInfo.dcurrentpatients < 0">
+                <img
+                  src="../assets/trendarrow03.svg"
+                  alt="trender"
+                  class="trender underTrend"
+                /> </span
+              ><br />
+              <span class="text-xs font-black">
+                {{ preLocalInfo.currentPatient }}</span
+              ><span class="text-xs">/{{ preLocalInfo.totalSickBed }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs">
+          新型コロナウイルス感染症（国内事例） 現在患者数 / 対策病床数
+          ※軽症者等は自宅療養など、病床を使用しないことがあります（詳細）
+          （現在患者数
+          <img src="../assets/trendarrow01.svg" alt="trender" class="trender" />
+          前日より増加
+          <img
+            src="../assets/trendarrow03.svg"
+            alt="trender"
+            class="trender underTrend"
+          />前日より減少）
+        </p>
+      </div>
+    </div>
+    <div class="flex justify-center">
+      <a href="https://note.stopcovid19.jp/n/n0b078f2b3dce"
+        ><img
+          src="../assets/notestopcovid19-banner.png"
+          alt="Logo"
+          class="header__logo"
+      /></a>
+      <a href="https://tk3-805-12365.vw.sakura.ne.jp:3443/thanks"
+        ><img src="../assets/mini-center.png" alt="Logo" class="header__logo"
+      /></a>
+      <a href="https://whowatch.tv/"
+        ><img
+          src="../assets/whowatch-banner.png"
+          alt="Logo"
+          class="header__logo"
+      /></a>
+    </div>
+
+    <div class="w-10/12 mx-auto">
+      <p class="">日本の新型コロナウイルス概況</p>
+      <div
+        v-if="!chartFlag"
+        className="mx-auto animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"
+      ></div>
+      <canvas id="myChart" width="400" height="300"></canvas>
+    </div>
+  </div>
+</template>
+<style scoped>
+.header__logo {
+  width: 30vw;
+  object-fit: cover;
+  max-width: 300px;
+  margin: auto;
+  max-height: 50px;
+}
+.trender {
+  width: 10px;
+  height: auto;
+  display: inline-block;
+}
+.underTrend {
+  transform: rotate(90deg);
+}
+</style>

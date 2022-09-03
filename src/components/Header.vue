@@ -4,7 +4,7 @@
   <header class="relative bg-red-700 w-full">
     <div class="max-w-7xl mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-center py-1 text-white">
-        <p class="text-5xl font-black">COVID-19 Japan</p>
+        <p class="text-5xl font-black my-5">COVID-19 Japan</p>
         <br />
       </div>
       <div class="flex items-center justify-center text-white">
