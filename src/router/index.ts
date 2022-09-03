@@ -3,7 +3,6 @@ import * as VueRouter from "vue-router";
 import { createRouter, createWebHistory } from "vue-router";
 
 import Top from "../components/Top.vue";
-import Test from "../components/Test.vue";
 import PreDataPage from "../components/PreDataPage.vue";
 
 const routes = [
@@ -14,10 +13,6 @@ const routes = [
   {
     path: "/:id",
     component: PreDataPage, // HelloWorldコンポーネントルーティング
-  },
-  {
-    path: "/test",
-    component: Test, // HelloWorldコンポーネントルーティング
   },
 ];
 const router = createRouter({
