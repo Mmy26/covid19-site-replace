@@ -15,10 +15,6 @@ const routes = [
     path: "/:id",
     component: PreDataPage, // HelloWorldコンポーネントルーティング
   },
-  {
-    path: "/test",
-    component: Test, // HelloWorldコンポーネントルーティング
-  },
 ];
 const router = createRouter({
   history: createWebHistory(),
