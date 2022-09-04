@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, onBeforeMount } from "vue";
+import { inject, ref, onBeforeMount, onUnmounted } from "vue";
 import Chart, { ChartItem } from "chart.js/auto";
 import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
@@ -52,6 +52,9 @@ onBeforeMount(async (): Promise<void> => {
     chart();
   }, 500);
 });
+onUnmounted(() => {
+  // console.log("離脱");
+});
 
 /**
  * 各県へリンク.
@@ -69,13 +72,13 @@ const chart = () => {
     throw new Error("");
   }
   const ctx = document.getElementById("myChart") as ChartItem;
-  console.log("発火");
+  // console.log("発火");
 
   if (!ctx) {
     throw new Error("");
   }
 
-  new Chart(ctx, {
+  const MyChart = new Chart(ctx, {
     type: "line",
     data: {
       datasets: [
@@ -232,7 +235,7 @@ const chart = () => {
             v-on:click="clickPreData('全国')"
           >
             <p class="">
-              {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}
+              {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}<br />
               (全国)現在患者数/対策病床数
             </p>
           </div>

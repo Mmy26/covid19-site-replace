@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, inject } from "vue";
+import { onMounted, ref, inject, onUnmounted } from "vue";
 import Chart, { ChartItem } from "chart.js/auto";
 import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
@@ -125,6 +125,9 @@ onMounted(async (): Promise<void> => {
     createLineGraph();
     chartFlag.value = true;
   }, 500);
+});
+onUnmounted(() => {
+  // console.log("離脱");
 });
 /**
  * トップページへ遷移.
