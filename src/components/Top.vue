@@ -235,7 +235,10 @@ const chart = () => {
             v-on:click="clickPreData('全国')"
           >
             <p class="">
-              {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}<br />
+
+
+              {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}<br/>
+
               (全国)現在患者数/対策病床数
             </p>
           </div>
