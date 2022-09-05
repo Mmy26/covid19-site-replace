@@ -250,9 +250,7 @@ const createLineGraph = () => {
 <style scoped>
 .canvas-container {
   position: relative;
-  max-width: 850px;
   width: 100%;
-  height: 450px;
   overflow: hidden;
   margin: 20px;
 }

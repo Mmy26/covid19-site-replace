@@ -335,8 +335,6 @@ const chart = () => {
 .canvas-container {
   position: relative;
   width: calc(100% - 40px);
-  max-width: 850px;
-  height: 450px;
   overflow: hidden;
   margin: 20px;
 }
