@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, onBeforeMount } from "vue";
+import { inject, ref, onBeforeMount, onUnmounted } from "vue";
 import Chart, { ChartItem } from "chart.js/auto";
 import { totalInfoKey } from "../providers/useTotalInfoProvider";
 import { TotalInfo } from "../types/TotalInfo";
@@ -52,6 +52,9 @@ onBeforeMount(async (): Promise<void> => {
     chart();
   }, 500);
 });
+onUnmounted(() => {
+  // console.log("離脱");
+});
 
 /**
  * 各県へリンク.
@@ -69,13 +72,13 @@ const chart = () => {
     throw new Error("");
   }
   const ctx = document.getElementById("myChart") as ChartItem;
-  console.log("発火");
+  // console.log("発火");
 
   if (!ctx) {
     throw new Error("");
   }
 
-  new Chart(ctx, {
+  const MyChart = new Chart(ctx, {
     type: "line",
     data: {
       datasets: [
@@ -232,7 +235,10 @@ const chart = () => {
             v-on:click="clickPreData('全国')"
           >
             <p class="">
+
+
               {{ totalInfo.currentPatient }}/{{ totalInfo.totalSickBed }}<br/>
+
               (全国)現在患者数/対策病床数
             </p>
           </div>
@@ -307,7 +313,9 @@ const chart = () => {
         v-if="!chartFlag"
         className="mx-auto animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"
       ></div>
-      <canvas id="myChart" width="400" height="300"></canvas>
+      <div class="canvas-container">
+        <canvas id="myChart"></canvas>
+      </div>
     </div>
   </div>
 </template>
@@ -326,5 +334,12 @@ const chart = () => {
 }
 .underTrend {
   transform: rotate(90deg);
+}
+.canvas-container {
+  position: relative;
+  width: calc(100% - 40px);
+  height: 450px;
+  overflow: hidden;
+  margin: 20px;
 }
 </style>
