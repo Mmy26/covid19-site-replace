@@ -310,7 +310,9 @@ const chart = () => {
         v-if="!chartFlag"
         className="mx-auto animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"
       ></div>
-      <canvas id="myChart" width="400" height="300"></canvas>
+      <div class="canvas-container">
+        <canvas id="myChart"></canvas>
+      </div>
     </div>
   </div>
 </template>
@@ -329,5 +331,12 @@ const chart = () => {
 }
 .underTrend {
   transform: rotate(90deg);
+}
+.canvas-container {
+  position: relative;
+  width: calc(100% - 40px);
+  height: 450px;
+  overflow: hidden;
+  margin: 20px;
 }
 </style>

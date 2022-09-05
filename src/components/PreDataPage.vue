@@ -195,11 +195,14 @@ const createLineGraph = () => {
 };
 </script>
 <template>
-  <main class="w-10/12 max-w-xl my-0 mx-auto">
+  <main class="w-10/12 my-0 mx-auto">
     <p class="text-2xl">
       {{ itemName }} 現在患者数/対策病床数 {{ preInfoCurrentAverage }}%
     </p>
-    <canvas id="myChart" width="400" height="400"></canvas>
+    <div class="canvas-container">
+      <canvas id="myChart"></canvas>
+    </div>
+
     <p class="text-xl">
       累積陽性者: {{ preDataInfo.accumulationPatient.toLocaleString() }}人
       累積退院者: {{ preDataInfo.accumulationExits }}人 <br />
@@ -230,7 +233,9 @@ const createLineGraph = () => {
         v-if="!chartFlag"
         className="mx-auto animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"
       ></div>
-      <canvas id="myChart2" width="400" height="300"></canvas>
+      <div class="canvas-container">
+        <canvas id="myChart2"></canvas>
+      </div>
     </div>
     <div class="mx-auto">
       <button
@@ -242,4 +247,12 @@ const createLineGraph = () => {
     </div>
   </main>
 </template>
-<style scoped></style>
+<style scoped>
+.canvas-container {
+  position: relative;
+  width: 100%;
+  height: 450px;
+  overflow: hidden;
+  margin: 20px;
+}
+</style>
